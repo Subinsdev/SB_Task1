@@ -190,7 +190,7 @@ def control_loop():
 	while not rospy.is_shutdown():
 		inc_x = goal.x - pose[0]
 		inc_y = goal.y - pose[1]
-
+		head = pose[2]
 		angle_to_goal = atan2(inc_y, inc_x)
 		print angle_to_goal - pose[2]
 
@@ -203,8 +203,8 @@ def control_loop():
 		elif regions['front'] < 2 or regions['bright'] < 2.5:
 			avoid_obstacle(velocity_msg)
 		elif abs(angle_to_goal - pose[2]) > 0.1:
-			velocity_msg.linear.x = 0.0
-			velocity_msg.angular.z = angle_to_goal - pose[2]
+			velocity_msg.linear.x = 0.2
+			velocity_msg.angular.z = Controller.PIDupdate(angle_to_goal,head)
 		else:
 			velocity_msg.linear.x = 0.8
 			velocity_msg.angular.z = 0.0
