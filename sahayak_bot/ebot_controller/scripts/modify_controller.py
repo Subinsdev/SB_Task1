@@ -97,8 +97,7 @@ def laser_callback(msg):
 
 def avoid_obstacle(velocity_msg):
 	d = 1.7
-	state_description = ''
-	if regions['front'] >= 9.5 and regions['fleft'] > d and regions['fright'] > 5:
+	if regions['front'] >= 9.5 and regions['fleft'] > d and regions['fright'] > 3:
 		velocity_msg.linear.x = 0
 		velocity_msg.angular.z = - 1
 	elif regions['front'] > d and regions['fleft'] > d and regions['fright'] > d:
@@ -142,7 +141,7 @@ def control_loop():
 	rate = rospy.Rate(F) 
 	time.sleep(1)
 	msg = LaserScan()
-
+	
 	velocity_msg = Twist()
 	velocity_msg.linear.x = 0
 	velocity_msg.linear.y = 0
@@ -191,21 +190,21 @@ def control_loop():
 	while not rospy.is_shutdown():
 		inc_x = goal.x - pose[0]
 		inc_y = goal.y - pose[1]
-
+		head = pose[2]
 		angle_to_goal = atan2(inc_y, inc_x)
 		print angle_to_goal - pose[2]
 
-		if inc_x - inc_y < 0.5 and inc_x -inc_y > -0.5:
+		if inc_x - inc_y < 0.05 and inc_x -inc_y > -0.05:
 			velocity_msg.linear.x = 0
 			velocity_msg.linear.y = 0
 			velocity_msg.angular.z = 0
 			pub.publish(velocity_msg)
 			break
-		elif regions['front'] < 2.5 or regions['bright'] < 2.5:
+		elif regions['front'] < 2 or regions['bright'] < 2.5:
 			avoid_obstacle(velocity_msg)
 		elif abs(angle_to_goal - pose[2]) > 0.1:
-			velocity_msg.linear.x = 0.0
-			velocity_msg.angular.z = angle_to_goal - pose[2]
+			velocity_msg.linear.x = 0.2
+			velocity_msg.angular.z = Controller.PIDupdate(angle_to_goal,head)
 		else:
 			velocity_msg.linear.x = 0.8
 			velocity_msg.angular.z = 0.0
