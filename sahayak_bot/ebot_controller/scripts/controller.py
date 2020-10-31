@@ -16,14 +16,14 @@ class PIDController:
 
 	out=0
 
-	Kp = 8.0
+	Kp = 12.0
 	Ki = 5.0
 	Kd = 0.025
 	tau = 0.02
-	limMin = -2*pi
-	limMax = 2*pi
-	limMinInt = -pi/1.5
-	limMaxInt = pi/1.5
+	limMin = -100
+	limMax = 100
+	limMinInt = -100
+	limMaxInt = 100
 
 	T=0
 
@@ -66,7 +66,7 @@ class PIDController:
 
 
 def Waypoints(t):
-	x = t[0]+0.1 
+	x = t[0]+0.7
 	y = 2*sin(x)*sin(x/2)
 	# derivative : (cos(x/2)*sin(x) + 2*sin(x/2)*cos(x))
 	return [x,y]
@@ -97,34 +97,33 @@ def laser_callback(msg):
 
 def avoid_obstacle(velocity_msg):
 	d = 1.7
-	state_description = ''
-	if regions['front'] >= 9.5 and regions['fleft'] > d and regions['fright'] > 5:
-		velocity_msg.linear.x = 0
-		velocity_msg.angular.z = - 1
+	if regions['front'] >= 9.5 and regions['fleft'] > d and regions['fright'] > 3:
+		velocity_msg.linear.x = 0.3
+		velocity_msg.angular.z = - 4
 	elif regions['front'] > d and regions['fleft'] > d and regions['fright'] > d:
 		velocity_msg.linear.x = 0.7
 		velocity_msg.angular.z = 0
 	elif regions['front'] < d and regions['fleft'] > d and regions['fright'] > d:
-		velocity_msg.linear.x = 0
-		velocity_msg.angular.z = 0.5
+		velocity_msg.linear.x = 0.2
+		velocity_msg.angular.z = 0.6
 	elif regions['front'] > d and regions['fleft'] > d and regions['fright'] < d:
 		velocity_msg.linear.x = 0.5
 		velocity_msg.angular.z = 0
 	elif regions['front'] > d and regions['fleft'] < d and regions['fright'] > d:
 		velocity_msg.linear.x = 0
-		velocity_msg.angular.z = 0.5
+		velocity_msg.angular.z = 0.7
 	elif regions['front'] < d and regions['fleft'] > d and regions['fright'] < d:
 		velocity_msg.linear.x = 0
-		velocity_msg.angular.z = 0.5
+		velocity_msg.angular.z = 0.7
 	elif regions['front'] < d and regions['fleft'] < d and regions['fright'] > d:
 		velocity_msg.linear.x = 0
-		velocity_msg.angular.z = 0.5
+		velocity_msg.angular.z = 0.6
 	elif regions['front'] < d and regions['fleft'] < d and regions['fright'] < d:
 		velocity_msg.linear.x = 0
-		velocity_msg.angular.z = 0.5
+		velocity_msg.angular.z = 0.6
 	elif regions['front'] > d and regions['fleft'] < d and regions['fright'] < d:
 		velocity_msg.linear.x = 0
-		velocity_msg.angular.z = 0.5
+		velocity_msg.angular.z = 0.6
 	else:
 		rospy.loginfo(regions)
 
@@ -138,11 +137,11 @@ def control_loop():
 	rospy.Subscriber('/ebot/laser/scan', LaserScan, laser_callback)
 	rospy.Subscriber('/odom', Odometry, odom_callback)
 
-	F = 10	# Frequency = 10 HZ
+	F = 50	# Frequency = 10 HZ
 	rate = rospy.Rate(F) 
 	time.sleep(1)
 	msg = LaserScan()
-
+	
 	velocity_msg = Twist()
 	velocity_msg.linear.x = 0
 	velocity_msg.linear.y = 0
@@ -171,7 +170,7 @@ def control_loop():
 		head = pose[2]
 		wave_goal = atan2((y_goal - y_cur),(x_goal - x_cur))
 
-		velocity_msg.linear.x = 0.7
+		velocity_msg.linear.x = 0.6
 		velocity_msg.angular.z = Controller.PIDupdate(wave_goal,head)
 
 		pub.publish(velocity_msg)
@@ -191,21 +190,21 @@ def control_loop():
 	while not rospy.is_shutdown():
 		inc_x = goal.x - pose[0]
 		inc_y = goal.y - pose[1]
-
+		head = pose[2]
 		angle_to_goal = atan2(inc_y, inc_x)
 		print angle_to_goal - pose[2]
 
-		if inc_x - inc_y < 0.5 and inc_x -inc_y > -0.5:
+		if inc_x - inc_y < 0.05 and inc_x -inc_y > -0.05:
 			velocity_msg.linear.x = 0
 			velocity_msg.linear.y = 0
 			velocity_msg.angular.z = 0
 			pub.publish(velocity_msg)
 			break
-		elif regions['front'] < 2.5 or regions['bright'] < 2.5:
+		elif regions['front'] < 2 or regions['bright'] < 2.5:
 			avoid_obstacle(velocity_msg)
 		elif abs(angle_to_goal - pose[2]) > 0.1:
-			velocity_msg.linear.x = 0.0
-			velocity_msg.angular.z = angle_to_goal - pose[2]
+			velocity_msg.linear.x = 0.6
+			velocity_msg.angular.z = Controller.PIDupdate(angle_to_goal,head)
 		else:
 			velocity_msg.linear.x = 0.8
 			velocity_msg.angular.z = 0.0
