@@ -101,32 +101,32 @@ def laser_callback(msg):
 def avoid_obstacle(velocity_msg):
     d = 1.7
     if regions['front'] >= 9.5 and regions['fleft'] > d and regions['fright'] > 3:
-        velocity_msg.linear.x = 0.3
+        velocity_msg.linear.x = 0.4
         velocity_msg.angular.z = - 4
     elif regions['front'] > d and regions['fleft'] > d and regions['fright'] > d:
         velocity_msg.linear.x = 0.7
         velocity_msg.angular.z = 0
     elif regions['front'] < d and regions['fleft'] > d and regions['fright'] > d:
         velocity_msg.linear.x = 0.2
-        velocity_msg.angular.z = 0.6
+        velocity_msg.angular.z = 0.7
     elif regions['front'] > d and regions['fleft'] > d and regions['fright'] < d:
-        velocity_msg.linear.x = 0.5
+        velocity_msg.linear.x = 0.7
         velocity_msg.angular.z = 0
     elif regions['front'] > d and regions['fleft'] < d and regions['fright'] > d:
         velocity_msg.linear.x = 0
-        velocity_msg.angular.z = 0.7
+        velocity_msg.angular.z = 1
     elif regions['front'] < d and regions['fleft'] > d and regions['fright'] < d:
         velocity_msg.linear.x = 0
-        velocity_msg.angular.z = 0.7
+        velocity_msg.angular.z = 1
     elif regions['front'] < d and regions['fleft'] < d and regions['fright'] > d:
         velocity_msg.linear.x = 0
-        velocity_msg.angular.z = 0.6
+        velocity_msg.angular.z = 1
     elif regions['front'] < d and regions['fleft'] < d and regions['fright'] < d:
         velocity_msg.linear.x = 0
-        velocity_msg.angular.z = 0.6
+        velocity_msg.angular.z = 1
     elif regions['front'] > d and regions['fleft'] < d and regions['fright'] < d:
         velocity_msg.linear.x = 0
-        velocity_msg.angular.z = 0.6
+        velocity_msg.angular.z = 1
     else:
         rospy.loginfo(regions)
 
@@ -202,8 +202,8 @@ def control_loop():
             break
         elif regions['front'] < 2 or regions['bright'] < 2.5:
             avoid_obstacle(velocity_msg)
-        elif abs(angle_to_goal - POSE[2]) > 0.1:
-            velocity_msg.linear.x = 0.6
+        elif abs(angle_to_goal - POSE[2]) > 0.2:
+            velocity_msg.linear.x = 0.8
             velocity_msg.angular.z = Controller.PID_update(angle_to_goal, head)
         else:
             velocity_msg.linear.x = 0.8
